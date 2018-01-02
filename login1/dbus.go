@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Integration with the systemd logind API.  See http://www.freedesktop.org/wiki/Software/systemd/logind/
+// Package login1 provides integration with the systemd logind API.  See http://www.freedesktop.org/wiki/Software/systemd/logind/
 package login1
 
 import (
@@ -34,7 +34,7 @@ type Conn struct {
 	object dbus.BusObject
 }
 
-// New() establishes a connection to the system bus and authenticates.
+// New establishes a connection to the system bus and authenticates.
 func New() (*Conn, error) {
 	c := new(Conn)
 
@@ -72,6 +72,115 @@ func (c *Conn) initConnection() error {
 	c.object = c.conn.Object("org.freedesktop.login1", dbus.ObjectPath(dbusPath))
 
 	return nil
+}
+
+// Session object definition.
+type Session struct {
+	ID   string
+	UID  uint32
+	User string
+	Seat string
+	Path dbus.ObjectPath
+}
+
+// User object definition.
+type User struct {
+	UID  uint32
+	Name string
+	Path dbus.ObjectPath
+}
+
+func (s Session) toInterface() []interface{} {
+	return []interface{}{s.ID, s.UID, s.User, s.Seat, s.Path}
+}
+
+func sessionFromInterfaces(session []interface{}) (*Session, error) {
+	id := session[0].(string)
+	uid := session[1].(uint32)
+	user := session[2].(string)
+	seat := session[3].(string)
+	path := session[4].(dbus.ObjectPath)
+
+	ret := Session{ID: id, UID: uid, User: user, Seat: seat, Path: path}
+	return &ret, nil
+
+}
+
+func userFromInterfaces(user []interface{}) (*User, error) {
+	uid := user[0].(uint32)
+	name := user[1].(string)
+	path := user[2].(dbus.ObjectPath)
+
+	ret := User{UID: uid, Name: name, Path: path}
+	return &ret, nil
+}
+
+// GetSession may be used to get the session object path for the session with the specified ID.
+func (c *Conn) GetSession(id string) (dbus.ObjectPath, error) {
+	var out interface{}
+	if err := c.object.Call(dbusInterface+".GetSession", 0, id).Store(&out); err != nil {
+		return "", err
+	}
+
+	return out.(dbus.ObjectPath), nil
+}
+
+// ListSessions returns an array with all current sessions.
+func (c *Conn) ListSessions() ([]Session, error) {
+	out := [][]interface{}{}
+	if err := c.object.Call(dbusInterface+".ListSessions", 0).Store(&out); err != nil {
+		return nil, err
+	}
+
+	ret := []Session{}
+
+	for _, el := range out {
+		session, err := sessionFromInterfaces(el)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, *session)
+	}
+	return ret, nil
+}
+
+// ListUsers returns an array with all currently logged in users.
+func (c *Conn) ListUsers() ([]User, error) {
+	out := [][]interface{}{}
+	if err := c.object.Call(dbusInterface+".ListUsers", 0).Store(&out); err != nil {
+		return nil, err
+	}
+
+	ret := []User{}
+
+	for _, el := range out {
+		user, err := userFromInterfaces(el)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, *user)
+	}
+	return ret, nil
+}
+
+// LockSession asks the session with the specified ID to activate the screen lock.
+func (c *Conn) LockSession(id string) {
+	c.object.Call(dbusInterface+".LockSession", 0, id)
+}
+
+// LockSessions asks all sessions to activate the screen locks. This may be used to lock any access to the machine in one action.
+func (c *Conn) LockSessions() {
+	c.object.Call(dbusInterface+".LockSessions", 0)
+}
+
+// TerminateSession forcibly terminate one specific session.
+func (c *Conn) TerminateSession(id string) {
+	c.object.Call(dbusInterface+".TerminateSession", 0, id)
+}
+
+// TerminateUser forcibly terminates all processes of a user.
+func (c *Conn) TerminateUser(uid uint32) {
+	c.object.Call(dbusInterface+".TerminateUser", 0, uid)
 }
 
 // Reboot asks logind for a reboot optionally asking for auth.

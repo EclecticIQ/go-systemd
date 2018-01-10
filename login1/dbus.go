@@ -99,17 +99,22 @@ func sessionFromInterfaces(session []interface{}) (*Session, error) {
 	uid := session[1].(uint32)
 	user := session[2].(string)
 	seat := session[3].(string)
-	path := session[4].(dbus.ObjectPath)
+	path, ok := session[4].(dbus.ObjectPath)
+	if !ok {
+		return nil, fmt.Errorf("failed to typecast session field 4 to ObjectPath")
+	}
 
 	ret := Session{ID: id, UID: uid, User: user, Seat: seat, Path: path}
 	return &ret, nil
-
 }
 
 func userFromInterfaces(user []interface{}) (*User, error) {
 	uid := user[0].(uint32)
 	name := user[1].(string)
-	path := user[2].(dbus.ObjectPath)
+	path, ok := user[2].(dbus.ObjectPath)
+	if !ok {
+		return nil, fmt.Errorf("failed to typecast user field 2 to ObjectPath")
+	}
 
 	ret := User{UID: uid, Name: name, Path: path}
 	return &ret, nil
@@ -122,7 +127,12 @@ func (c *Conn) GetSession(id string) (dbus.ObjectPath, error) {
 		return "", err
 	}
 
-	return out.(dbus.ObjectPath), nil
+	ret, ok := out.(dbus.ObjectPath)
+	if !ok {
+		return "", fmt.Errorf("failed to typecast session to ObjectPath")
+	}
+
+	return ret, nil
 }
 
 // ListSessions returns an array with all current sessions.
@@ -133,7 +143,6 @@ func (c *Conn) ListSessions() ([]Session, error) {
 	}
 
 	ret := []Session{}
-
 	for _, el := range out {
 		session, err := sessionFromInterfaces(el)
 		if err != nil {
@@ -152,7 +161,6 @@ func (c *Conn) ListUsers() ([]User, error) {
 	}
 
 	ret := []User{}
-
 	for _, el := range out {
 		user, err := userFromInterfaces(el)
 		if err != nil {

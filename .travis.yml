@@ -23,7 +23,8 @@ install:
  - docker run -d --cidfile=/tmp/cidfile --privileged -e GOPATH=${GOPATH} -v ${PWD}:${BUILD_DIR} go-systemd/container-tests /bin/systemd --system
 
 script:
- - docker exec `cat /tmp/cidfile` /bin/bash -c "cd ${BUILD_DIR} && ./test"
+ - docker exec -d -t `cat /tmp/cidfile` /bin/bash -c "useradd test && login -f test"
+ - docker exec -u test `cat /tmp/cidfile` /bin/bash -c "cd ${BUILD_DIR} && ./test"
 
 after_script:
  - docker kill `cat /tmp/cidfile`

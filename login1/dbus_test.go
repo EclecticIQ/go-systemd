@@ -15,6 +15,7 @@
 package login1
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -25,4 +26,51 @@ func TestNew(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestListSessions(t *testing.T) {
+	c, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sessions, err := c.ListSessions()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(sessions) < 1 {
+		t.Fatal(fmt.Errorf("expected at least one active session"))
+	}
+
+	for _, session := range sessions {
+		fmt.Println(session.ID)
+		fmt.Println(session.UID)
+		fmt.Println(session.User)
+		fmt.Println(session.Seat)
+		fmt.Println(session.Path)
+	}
+}
+
+func TestListUsers(t *testing.T) {
+	c, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	users, err := c.ListUsers()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(users) < 1 {
+		t.Fatal(fmt.Errorf("expected at least one active user"))
+	}
+
+	for _, user := range users {
+		fmt.Println(user.UID)
+		fmt.Println(user.Name)
+		fmt.Println(user.Path)
+	}
+
 }

@@ -95,10 +95,22 @@ func (s Session) toInterface() []interface{} {
 }
 
 func sessionFromInterfaces(session []interface{}) (*Session, error) {
-	id := session[0].(string)
-	uid := session[1].(uint32)
-	user := session[2].(string)
-	seat := session[3].(string)
+	id, ok := session[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to typecast session field 0 to string")
+	}
+	uid, ok := session[1].(uint32)
+	if !ok {
+		return nil, fmt.Errorf("failed to typecast session field 1 to uint32")
+	}
+	user, ok := session[2].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to typecast session field 2 to string")
+	}
+	seat, ok := session[3].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to typecast session field 2 to string")
+	}
 	path, ok := session[4].(dbus.ObjectPath)
 	if !ok {
 		return nil, fmt.Errorf("failed to typecast session field 4 to ObjectPath")
@@ -109,8 +121,14 @@ func sessionFromInterfaces(session []interface{}) (*Session, error) {
 }
 
 func userFromInterfaces(user []interface{}) (*User, error) {
-	uid := user[0].(uint32)
-	name := user[1].(string)
+	uid, ok := user[0].(uint32)
+	if !ok {
+		return nil, fmt.Errorf("failed to typecast user field 0 to uint32")
+	}
+	name, ok := user[1].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to typecast session field 1 to string")
+	}
 	path, ok := user[2].(dbus.ObjectPath)
 	if !ok {
 		return nil, fmt.Errorf("failed to typecast user field 2 to ObjectPath")

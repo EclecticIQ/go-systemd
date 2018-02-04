@@ -23,7 +23,7 @@ install:
  - docker run -d --cidfile=/tmp/cidfile --privileged -e GOPATH=${GOPATH} -v ${PWD}:${BUILD_DIR} go-systemd/container-tests /bin/systemd --system
 
 script:
- - docker exec -d -t `cat /tmp/cidfile` /bin/bash -c "login -f root"
+ - docker exec -d -t `cat /tmp/cidfile` /bin/bash -c "agetty -a root tty"
  - docker exec `cat /tmp/cidfile` /bin/bash -c "cd ${BUILD_DIR} && ./test"
 
 after_script:
